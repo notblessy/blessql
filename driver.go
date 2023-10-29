@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/amacneil/dbmate/pkg/dbutil"
+	"github.com/notblessy/utils"
 )
 
 // Driver provides top level database functions
@@ -18,8 +18,8 @@ type Driver interface {
 	MigrationsTableExists(*sql.DB) (bool, error)
 	CreateMigrationsTable(*sql.DB) error
 	SelectMigrations(*sql.DB, int) (map[string]bool, error)
-	InsertMigration(dbutil.Transaction, string) error
-	DeleteMigration(dbutil.Transaction, string) error
+	InsertMigration(utils.Transaction, string) error
+	DeleteMigration(utils.Transaction, string) error
 	Ping() error
 }
 

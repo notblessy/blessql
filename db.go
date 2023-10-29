@@ -1,6 +1,7 @@
 package blessql
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -8,9 +9,10 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
+	"sort"
 	"time"
 
-	"github.com/amacneil/dbmate/pkg/dbutil"
 	"github.com/notblessy/utils"
 )
 
@@ -27,6 +29,9 @@ var (
 	ErrMigrationNotFound     = errors.New("can't find migration file")
 	ErrCreateDirectory       = errors.New("unable to create directory")
 )
+
+// migrationFileRegexp pattern for valid migration files
+var migrationFileRegexp = regexp.MustCompile(`^(\d+).*\.sql$`)
 
 const migrationTemplate = "-- migrate:up\n\n\n-- migrate:down\n\n"
 
@@ -99,6 +104,33 @@ func (db *DB) Driver() (Driver, error) {
 	return drv, nil
 }
 
+func (db *DB) wait(drv Driver) error {
+	// attempt connection to database server
+	err := drv.Ping()
+	if err == nil {
+		// connection successful
+		return nil
+	}
+
+	fmt.Fprint(db.Log, "Waiting for database")
+	for i := 0 * time.Second; i < db.WaitTimeout; i += db.WaitInterval {
+		fmt.Fprint(db.Log, ".")
+		time.Sleep(db.WaitInterval)
+
+		// attempt connection to database server
+		err = drv.Ping()
+		if err == nil {
+			// connection successful
+			fmt.Fprint(db.Log, "\n")
+			return nil
+		}
+	}
+
+	// if we find outselves here, we could not connect within the timeout
+	fmt.Fprint(db.Log, "\n")
+	return fmt.Errorf("%w: %s", ErrCantConnect, err)
+}
+
 // NewMigration creates a new migration file
 func (db *DB) NewMigration(name string) error {
 	// new migration name
@@ -152,7 +184,7 @@ func (db *DB) Migrate() error {
 	if err != nil {
 		return err
 	}
-	defer dbutil.MustClose(sqlDB)
+	defer utils.MustClose(sqlDB)
 
 	for _, migration := range migrations {
 		if migration.Applied {
@@ -166,7 +198,7 @@ func (db *DB) Migrate() error {
 			return err
 		}
 
-		execMigration := func(tx dbutil.Transaction) error {
+		execMigration := func(tx utils.Transaction) error {
 			// run actual migration
 			result, err := tx.Exec(parsed.Up)
 			if err != nil {
@@ -200,10 +232,270 @@ func (db *DB) Migrate() error {
 	return nil
 }
 
+// CreateAndMigrate creates the database (if necessary) and runs migrations
+func (db *DB) CreateAndMigrate() error {
+	drv, err := db.Driver()
+	if err != nil {
+		return err
+	}
+
+	// create database if it does not already exist
+	// skip this step if we cannot determine status
+	// (e.g. user does not have list database permission)
+	exists, err := drv.DatabaseExists()
+	if err == nil && !exists {
+		if err := drv.CreateDatabase(); err != nil {
+			return err
+		}
+	}
+
+	// migrate
+	return db.Migrate()
+}
+
+// Create creates the current database
+func (db *DB) Create() error {
+	drv, err := db.Driver()
+	if err != nil {
+		return err
+	}
+
+	return drv.CreateDatabase()
+}
+
+// Drop drops the current database (if it exists)
+func (db *DB) Drop() error {
+	drv, err := db.Driver()
+	if err != nil {
+		return err
+	}
+
+	return drv.DropDatabase()
+}
+
+// DumpSchema writes the current database schema to a file
+func (db *DB) DumpSchema() error {
+	drv, err := db.Driver()
+	if err != nil {
+		return err
+	}
+
+	sqlDB, err := db.openDatabaseForMigration(drv)
+	if err != nil {
+		return err
+	}
+	defer utils.MustClose(sqlDB)
+
+	schema, err := drv.DumpSchema(sqlDB)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(db.Log, "Writing: %s\n", db.SchemaFile)
+
+	// ensure schema directory exists
+	if err = ensureDir(filepath.Dir(db.SchemaFile)); err != nil {
+		return err
+	}
+
+	// write schema to file
+	return os.WriteFile(db.SchemaFile, schema, 0o644)
+}
+
 // ensureDir creates a directory if it does not already exist
 func ensureDir(dir string) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("%w `%s`", ErrCreateDirectory, dir)
+	}
+
+	return nil
+}
+
+func doTransaction(sqlDB *sql.DB, txFunc func(utils.Transaction) error) error {
+	tx, err := sqlDB.Begin()
+	if err != nil {
+		return err
+	}
+
+	if err := txFunc(tx); err != nil {
+		if err1 := tx.Rollback(); err1 != nil {
+			return err1
+		}
+
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (db *DB) openDatabaseForMigration(drv Driver) (*sql.DB, error) {
+	sqlDB, err := drv.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := drv.CreateMigrationsTable(sqlDB); err != nil {
+		utils.MustClose(sqlDB)
+		return nil, err
+	}
+
+	return sqlDB, nil
+}
+
+func (db *DB) printVerbose(result sql.Result) {
+	lastInsertID, err := result.LastInsertId()
+	if err == nil {
+		fmt.Fprintf(db.Log, "Last insert ID: %d\n", lastInsertID)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err == nil {
+		fmt.Fprintf(db.Log, "Rows affected: %d\n", rowsAffected)
+	}
+}
+
+func (db *DB) readMigrationsDir() ([]fs.DirEntry, error) {
+	path := filepath.Clean(db.MigrationsDir)
+
+	// We use nil instead of os.DirFS() because DirFS cannot support both relative and absolute
+	// directory paths - it must be anchored at either "." or "/", which we do not know in advance.
+	// See: https://github.com/amacneil/dbmate/issues/403
+	if db.FS == nil {
+		return os.ReadDir(path)
+	}
+
+	return fs.ReadDir(db.FS, path)
+}
+
+// FindMigrations lists all available migrations
+func (db *DB) FindMigrations() ([]Migration, error) {
+	drv, err := db.Driver()
+	if err != nil {
+		return nil, err
+	}
+
+	sqlDB, err := drv.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer utils.MustClose(sqlDB)
+
+	// find applied migrations
+	appliedMigrations := map[string]bool{}
+	migrationsTableExists, err := drv.MigrationsTableExists(sqlDB)
+	if err != nil {
+		return nil, err
+	}
+
+	if migrationsTableExists {
+		appliedMigrations, err = drv.SelectMigrations(sqlDB, -1)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// find filesystem migrations
+	files, err := db.readMigrationsDir()
+	if err != nil {
+		return nil, fmt.Errorf("%w `%s`", ErrMigrationDirNotFound, db.MigrationsDir)
+	}
+
+	migrations := []Migration{}
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+
+		matches := migrationFileRegexp.FindStringSubmatch(file.Name())
+		if len(matches) < 2 {
+			continue
+		}
+
+		migration := Migration{
+			Applied:  false,
+			FileName: matches[0],
+			FilePath: filepath.Join(db.MigrationsDir, matches[0]),
+			FS:       db.FS,
+			Version:  matches[1],
+		}
+		if ok := appliedMigrations[migration.Version]; ok {
+			migration.Applied = true
+		}
+
+		migrations = append(migrations, migration)
+	}
+
+	sort.Slice(migrations, func(i, j int) bool {
+		return migrations[i].FileName < migrations[j].FileName
+	})
+
+	return migrations, nil
+}
+
+// Rollback rolls back the most recent migration
+func (db *DB) Rollback() error {
+	drv, err := db.Driver()
+	if err != nil {
+		return err
+	}
+
+	sqlDB, err := db.openDatabaseForMigration(drv)
+	if err != nil {
+		return err
+	}
+	defer utils.MustClose(sqlDB)
+
+	// find last applied migration
+	var latest *Migration
+	migrations, err := db.FindMigrations()
+	if err != nil {
+		return err
+	}
+
+	for i, migration := range migrations {
+		if migration.Applied {
+			latest = &migrations[i]
+		}
+	}
+
+	if latest == nil {
+		return ErrNoRollback
+	}
+
+	fmt.Fprintf(db.Log, "Rolling back: %s\n", latest.FileName)
+
+	parsed, err := latest.Parse()
+	if err != nil {
+		return err
+	}
+
+	execMigration := func(tx utils.Transaction) error {
+		// rollback migration
+		result, err := tx.Exec(parsed.Down)
+		if err != nil {
+			return err
+		} else if db.Verbose {
+			db.printVerbose(result)
+		}
+
+		// remove migration record
+		return drv.DeleteMigration(tx, latest.Version)
+	}
+
+	if parsed.DownOptions.Transaction() {
+		// begin transaction
+		err = doTransaction(sqlDB, execMigration)
+	} else {
+		// run outside of transaction
+		err = execMigration(sqlDB)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// automatically update schema file, silence errors
+	if db.AutoDumpSchema {
+		_ = db.DumpSchema()
 	}
 
 	return nil
