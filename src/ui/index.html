@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+  />
+  <link rel="stylesheet" href="./style/style.css">
+  <title>Blessql</title>
+</head>
+<body>
+  <main class="container">
+    <div class="dragable-header" />
+    <div class="body-wrapper">
+      <div class="left-section">
+        <div class="left-box">
+          <ion-icon name="server-outline" class="is-logo color-main"></ion-icon>
+          <p class="fs-md center light m-0 mt-3 color-dark">Welcome to blessql</p>
+          <p class="fs-xs center light m-0 color-dimmed">Version 0.0.1</p>
+        </div>
+      </div>
+      <div class="right-section">
+        <div class="right-box">
+          <form id="connectionForm" class="form-wrapper">
+            <p class="form-title fs-sm color-dark">mysql Connection</p>
+            <div class="form-group">
+              <label for="inputHost" class="fs-xs">Host</label>
+              <div>
+                <input type="text" class="form-control" id="host" placeholder="localhost">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="user" class="fs-xs">User</label>
+              <div>
+                <input type="text" class="form-control" id="user" placeholder="root">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="inputPassword" class="fs-xs">Password</label>
+              <div>
+                <input type="password" class="form-control" id="password">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="database" class="fs-xs">Database</label>
+              <div>
+                <input type="text" class="form-control" id="database" placeholder="mysql">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="database" class="fs-xs">Port</label>
+              <div>
+                <input type="text" class="form-control" id="port" placeholder="3306">
+              </div>
+            </div>
+            <div class="button-group">
+              <button type="submit" class="macos-button">Save</button>
+              <button type="submit" class="macos-button">Test</button>
+              <button type="submit" class="macos-button">Connect</button>
+            </div>
+          </form>
+          <div class="footer">
+            <div id="connections"></div>
+            <!-- <p class="fs-xs color-black">More info <a href="#" class="fs-sm">blessql</a></p> -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+<script src="./app.js"></script>
+</html>
