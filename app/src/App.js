@@ -1,10 +1,10 @@
 import { Route, Routes } from "react-router-dom";
-import { Connection } from "./pages/Connection";
+import { ConnectionList } from "./pages/Connection/List";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Connection />} />
+      <Route path="/" element={<ConnectionList />} />
     </Routes>
   );
 }

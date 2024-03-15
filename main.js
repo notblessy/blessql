@@ -1,32 +1,6 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
 
-const { db } = require("./database/sqlite/sqlite");
-
-const createConnection = async (connection) => {
-  try {
-    db.serialize(async () => {
-      const query =
-        "INSERT INTO connections (user, host, password, database, port) VALUES (?, ?, ?, ?, ?)";
-
-      const stmt = db.prepare(query);
-      stmt.run(
-        connection.user,
-        connection.host,
-        connection.password,
-        connection.database,
-        connection.port
-      );
-
-      stmt.finalize();
-    });
-
-    db.close();
-  } catch (error) {
-    console.error(error);
-  }
-};
-
 const createWindow = async () => {
   const window = new BrowserWindow({
     title: "blessql",
@@ -53,4 +27,4 @@ const createWindow = async () => {
   // window.loadURL(startUrl);
 };
 
-module.exports = { createWindow, createConnection };
+module.exports = { createWindow };

@@ -28,6 +28,17 @@ db.serialize(() => {
       }
     }
   );
+
+  let rows = [];
+
+  db.get(`SELECT * FROM connections`, (err, row) => {
+    if (err) {
+      console.error(err.message);
+      return;
+    }
+
+    rows.push(row);
+  });
 });
 
 module.exports = { db };

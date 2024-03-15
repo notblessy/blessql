@@ -1,17 +1,17 @@
-import { useEffect } from "react";
-import "./index.css";
+import "../../style/index.css";
 import { useForm } from "react-hook-form";
 import { ServerOutline } from "react-ionicons";
 
-export const Connection = () => {
+export const ConnectionCreate = () => {
   const blessql = window.blessql;
-  const temp = window.temp;
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({
     defaultValues: {
+      name: "",
       host: "",
       user: "",
       password: "",
@@ -49,6 +49,20 @@ export const Connection = () => {
             <div className="right-box">
               <form className="form-wrapper" onSubmit={handleSubmit(onSubmit)}>
                 <p className="form-title fs-sm color-dark">mysql Connection</p>
+                <div className="form-group">
+                  <label htmlFor="inputName" className="fs-xs">
+                    Name
+                  </label>
+                  <div>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="name"
+                      placeholder="mysql-local"
+                      {...register("name")}
+                    />
+                  </div>
+                </div>
                 <div className="form-group">
                   <label htmlFor="inputHost" className="fs-xs">
                     Host

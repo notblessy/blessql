@@ -1,7 +1,8 @@
-const { createWindow, createConnection } = require("./main");
+const { createWindow } = require("./main");
 const { app, ipcMain } = require("electron");
+const { createConnection } = require("./database/sqlite/connection");
 
-require("./database");
+require("./database.js.bak");
 require("electron-reload")(__dirname);
 
 app.allowRendererProcessReuse = true;
