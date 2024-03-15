@@ -8,7 +8,6 @@ let connection = mysql.createConnection({
 });
 
 const getConnection = () => {
-  console.log("KONEKSI", connection)
   return connection;
 };
 

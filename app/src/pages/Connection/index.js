@@ -1,9 +1,11 @@
+import { useEffect } from "react";
 import "./index.css";
 import { useForm } from "react-hook-form";
 import { ServerOutline } from "react-ionicons";
 
 export const Connection = () => {
   const blessql = window.blessql;
+  const temp = window.temp;
   const {
     register,
     handleSubmit,

@@ -5,18 +5,27 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "postinstall": "electron-rebuild"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^29.1.0"
+    "add": "^2.0.6",
+    "electron": "^29.1.0",
+    "electron-rebuild": "^3.2.9",
+    "package": "^1.0.1",
+    "the": "^1.0.2",
+    "to": "^0.2.9"
   },
   "dependencies": {
     "electron-reload": "^2.0.0-alpha.1",
     "mysql": "^2.18.1",
     "mysql2": "^3.9.2",
-    "promise-mysql": "^5.2.0"
+    "promise-mysql": "^5.2.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
   }
 }

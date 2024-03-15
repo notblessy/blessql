@@ -1,19 +1,27 @@
 const { app, BrowserWindow } = require("electron");
-const { getConnection } = require("./database");
-const url = require("url");
 const path = require("path");
+
+const { db } = require("./database/sqlite/sqlite");
 
 const createConnection = async (connection) => {
   try {
-    const conn = await getConnection();
-    const query = "INSERT INTO users (id, name, email) VALUES (?, ?, ?)";
-    const res = await conn.query(query, [
-      Math.floor(Math.random() * 1000),
-      connection.user,
-      connection.host,
-    ]);
+    db.serialize(async () => {
+      const query =
+        "INSERT INTO connections (user, host, password, database, port) VALUES (?, ?, ?, ?, ?)";
 
-    connection.id = res.insertId;
+      const stmt = db.prepare(query);
+      stmt.run(
+        connection.user,
+        connection.host,
+        connection.password,
+        connection.database,
+        connection.port
+      );
+
+      stmt.finalize();
+    });
+
+    db.close();
   } catch (error) {
     console.error(error);
   }
@@ -26,7 +34,7 @@ const createWindow = async () => {
     fullscreenable: false,
     width: 600,
     height: 400,
-    resizable: false,
+    // resizable: false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: true,
