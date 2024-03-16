@@ -231,3 +231,22 @@ input[type="submit"] {
   color: #FAFAFA;
   border: 1px solid #007AFE;
 }
+
+.connection-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.connection-each {
+  background: none;;
+  border: 1px solid #c4c4c4;
+  display: flex;
+  flex-direction: row;
+  font-size: 16px;
+  padding: 5px;
+  color: #666666;
+  border-radius: 5px;
+  gap: 5px;
+}

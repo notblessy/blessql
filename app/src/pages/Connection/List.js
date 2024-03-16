@@ -1,36 +1,14 @@
 import { useEffect, useState } from "react";
+import { IoSearch, IoServerOutline } from "react-icons/io5";
+import { BsPlugin } from "react-icons/bs";
+
 import "../../style/index.css";
-import { useForm } from "react-hook-form";
-import {
-  Add,
-  AddCircle,
-  Search,
-  SearchCircle,
-  SearchCircleOutline,
-  SearchOutline,
-  SearchSharp,
-  ServerOutline,
-} from "react-ionicons";
 
 export const ConnectionList = () => {
   const blessql = window.blessql;
 
   const [connections, setConnections] = useState([]);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      name: "",
-      host: "",
-      user: "",
-      password: "",
-      database: "",
-      port: "",
-    },
-  });
+  const [selected, setSelected] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -44,11 +22,10 @@ export const ConnectionList = () => {
       }
       return;
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blessql]);
 
-  const onSubmit = (data) => {
-    blessql.send("submit:createConnection", data);
-  };
+  console.log(connections, selected);
 
   return (
     <>
@@ -56,12 +33,7 @@ export const ConnectionList = () => {
         <div className="body-wrapper">
           <div className="left-section">
             <div className="left-box">
-              <ServerOutline
-                color="#FFAB09"
-                title="server"
-                width="80px"
-                height="80px"
-              />
+              <IoServerOutline color="#FFAB09" title="server" size={80} />
               <p className="fs-md center light m-0 mt-3 color-dark">
                 Welcome to blessql
               </p>
@@ -76,7 +48,7 @@ export const ConnectionList = () => {
                 <button className="add-button clickable">+</button>
                 <div class="search-container clickable">
                   <div className="search-button">
-                    <Search width="14px" height="14px" color="#888" />
+                    <IoSearch size={14} color="#888" />
                   </div>
                   <input
                     type="text"
@@ -86,13 +58,41 @@ export const ConnectionList = () => {
                   />
                 </div>
               </div>
-              <div className="connectionList">
+              <div
+                className="connection-list clickable"
+                style={{ marginTop: 16 }}
+              >
                 {connections?.map((conn) => {
+                  let style = {};
+                  if (selected === conn.id) {
+                    style = {
+                      backgroundColor: "#E1D9BC",
+                      border: "1px solid #E1D9BC",
+                    };
+                  }
+
                   return (
-                    <div className="connection" key={conn.id}>
-                      <p className="fs-sm color-dark">{conn.host}</p>
-                      <p className="fs-xs color-dimmed">{conn.database}</p>
-                    </div>
+                    <button
+                      className="connection-each"
+                      key={conn.id}
+                      style={style}
+                      onClick={() => {
+                        if (selected === conn.id) {
+                          setSelected("");
+                          return;
+                        }
+
+                        setSelected(conn.id);
+                      }}
+                      onDoubleClick={() => console.log("connected", conn.name)}
+                    >
+                      <BsPlugin
+                        size={18}
+                        className="color-dark"
+                        style={{ padding: 0, margin: 0 }}
+                      />
+                      {conn.name}
+                    </button>
                   );
                 })}
               </div>
