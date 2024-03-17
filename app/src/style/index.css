@@ -23,30 +23,37 @@ body {
 }
 
 .right-section {
+  height: 100%;
+  box-sizing: border-box;
   flex: 2;
+  background: #FFF8E1;
+  overflow: auto;
+}
+
+.right-section::-webkit-scrollbar {
+  display: none;
 }
 
 .left-box {
+  height: 100%;
   display: flex;
   padding: 0 20px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100%;
 }
 
 .right-box {
+  height: 100%;
   background: #FFF8E1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100%;
 }
 
 .connection-right-box {
   padding: 0 10px;
-  background: #FFF8E1;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -233,10 +240,12 @@ input[type="submit"] {
 }
 
 .connection-list {
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 5px;
   margin-top: 5px;
+  padding-bottom: 20px;
 }
 
 .connection-each {

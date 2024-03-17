@@ -3,6 +3,7 @@ const path = require("path");
 
 const createWindow = async () => {
   const window = new BrowserWindow({
+    name: "connection-list",
     title: "blessql",
     titleBarStyle: "hidden",
     fullscreenable: false,
@@ -27,4 +28,4 @@ const createWindow = async () => {
   // window.loadURL(startUrl);
 };
 
-module.exports = { createWindow };
+module.exports = { createWindow, createConnectionWindow };

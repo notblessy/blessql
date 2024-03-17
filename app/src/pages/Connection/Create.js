@@ -1,9 +1,11 @@
+import { useState } from "react";
 import "../../style/index.css";
 import { useForm } from "react-hook-form";
-import { ServerOutline } from "react-ionicons";
 
 export const ConnectionCreate = () => {
   const blessql = window.blessql;
+
+  const [testConnect, setTestConnect] = useState({});
 
   const {
     register,
@@ -20,8 +22,20 @@ export const ConnectionCreate = () => {
     },
   });
 
-  const onSubmit = (data) => {
+  blessql.on("test-connection-result", (data) => {
+    setTestConnect(data);
+
+    return () => {
+      blessql.removeAllListeners("test-connection-result");
+    };
+  });
+
+  const saveConnection = (data) => {
     blessql.send("submit:createConnection", data);
+  };
+
+  const handleTest = (data) => {
+    blessql.send("test-connection", data);
   };
 
   return (
@@ -29,25 +43,9 @@ export const ConnectionCreate = () => {
       <div className="container">
         <div className="dragable-header" />
         <div className="body-wrapper">
-          <div className="left-section">
-            <div className="left-box">
-              <ServerOutline
-                color="#FFAB09"
-                title="server"
-                width="80px"
-                height="80px"
-              />
-              <p className="fs-md center light m-0 mt-3 color-dark">
-                Welcome to blessql
-              </p>
-              <p className="fs-xs center light m-0 color-dimmed">
-                Version 0.0.1
-              </p>
-            </div>
-          </div>
           <div className="right-section">
             <div className="right-box">
-              <form className="form-wrapper" onSubmit={handleSubmit(onSubmit)}>
+              <form className="form-wrapper">
                 <p className="form-title fs-sm color-dark">mysql Connection</p>
                 <div className="form-group">
                   <label htmlFor="inputName" className="fs-xs">
@@ -56,10 +54,10 @@ export const ConnectionCreate = () => {
                   <div>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control clickable"
                       id="name"
                       placeholder="mysql-local"
-                      {...register("name")}
+                      {...register("name", { required: true })}
                     />
                   </div>
                 </div>
@@ -70,10 +68,18 @@ export const ConnectionCreate = () => {
                   <div>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control clickable"
                       id="host"
+                      style={{
+                        background:
+                          testConnect.status === "success"
+                            ? "#E8EEDD"
+                            : testConnect.status === "error"
+                            ? "#F2E0DE"
+                            : "",
+                      }}
                       placeholder="localhost"
-                      {...register("host")}
+                      {...register("host", { required: true })}
                     />
                   </div>
                 </div>
@@ -84,10 +90,18 @@ export const ConnectionCreate = () => {
                   <div>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control clickable"
                       id="user"
+                      style={{
+                        background:
+                          testConnect.status === "success"
+                            ? "#E8EEDD"
+                            : testConnect.status === "error"
+                            ? "#F2E0DE"
+                            : "",
+                      }}
                       placeholder="root"
-                      {...register("user")}
+                      {...register("user", { required: true })}
                     />
                   </div>
                 </div>
@@ -98,8 +112,16 @@ export const ConnectionCreate = () => {
                   <div>
                     <input
                       type="password"
-                      className="form-control"
+                      className="form-control clickable"
                       id="password"
+                      style={{
+                        background:
+                          testConnect.status === "success"
+                            ? "#E8EEDD"
+                            : testConnect.status === "error"
+                            ? "#F2E0DE"
+                            : "",
+                      }}
                       {...register("password")}
                     />
                   </div>
@@ -111,8 +133,16 @@ export const ConnectionCreate = () => {
                   <div>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control clickable"
                       id="database"
+                      style={{
+                        background:
+                          testConnect.status === "success"
+                            ? "#E8EEDD"
+                            : testConnect.status === "error"
+                            ? "#F2E0DE"
+                            : "",
+                      }}
                       placeholder="mysql"
                       {...register("database")}
                     />
@@ -125,23 +155,36 @@ export const ConnectionCreate = () => {
                   <div>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control clickable"
                       id="port"
+                      style={{
+                        background:
+                          testConnect.status === "success"
+                            ? "#E8EEDD"
+                            : testConnect.status === "error"
+                            ? "#F2E0DE"
+                            : "",
+                      }}
                       placeholder="3306"
                       {...register("port")}
                     />
                   </div>
                 </div>
                 <div className="button-group">
-                  <button type="submit" className="macos-button">
+                  <button
+                    type="submit"
+                    className="macos-button clickable"
+                    onClick={handleSubmit(saveConnection)}
+                  >
                     Save
                   </button>
-                  <button type="submit" className="macos-button">
+                  <button
+                    className="macos-button clickable"
+                    onClick={handleSubmit(handleTest)}
+                  >
                     Test
                   </button>
-                  <button type="submit" className="macos-button">
-                    Connect
-                  </button>
+                  <button className="macos-button clickable">Connect</button>
                 </div>
               </form>
               <div className="footer">

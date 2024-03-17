@@ -11,21 +11,17 @@ export const ConnectionList = () => {
   const [selected, setSelected] = useState("");
 
   useEffect(() => {
-    (async () => {
-      const conns = await blessql.getAllConnections();
-      if (conns.length > 0) {
-        if (connections.length === 0) {
-          setConnections(conns);
-        } else {
-          setConnections(connections.concat(conns));
-        }
+    const fetchData = async () => {
+      try {
+        const data = await blessql.getAllConnections();
+        setConnections([...data]);
+      } catch (error) {
+        console.error("Error fetching connections:", error);
       }
-      return;
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blessql]);
+    };
 
-  console.log(connections, selected);
+    fetchData();
+  }, [blessql]);
 
   return (
     <>
@@ -45,8 +41,13 @@ export const ConnectionList = () => {
           <div className="right-section">
             <div className="connection-right-box">
               <div className="list-header">
-                <button className="add-button clickable">+</button>
-                <div class="search-container clickable">
+                <button
+                  className="add-button clickable"
+                  onClick={() => blessql.send("window:createConnection", {})}
+                >
+                  +
+                </button>
+                <div className="search-container clickable">
                   <div className="search-button">
                     <IoSearch size={14} color="#888" />
                   </div>

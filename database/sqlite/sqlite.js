@@ -5,6 +5,7 @@ db.serialize(() => {
   const query = `
     CREATE TABLE IF NOT EXISTS connections (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
         host TEXT NOT NULL,
         user TEXT NOT NULL,
         password TEXT NOT NULL,

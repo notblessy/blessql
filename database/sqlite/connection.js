@@ -20,10 +20,11 @@ const createConnection = async (connection) => {
   try {
     db.serialize(async () => {
       const query =
-        "INSERT INTO connections (user, host, password, database, port) VALUES (?, ?, ?, ?, ?)";
+        "INSERT INTO connections (name, user, host, password, database, port) VALUES (?, ?, ?, ?, ?, ?)";
 
       const stmt = db.prepare(query);
       stmt.run(
+        connection.name,
         connection.user,
         connection.host,
         connection.password,
@@ -33,8 +34,6 @@ const createConnection = async (connection) => {
 
       stmt.finalize();
     });
-
-    db.close();
   } catch (error) {
     console.error(error);
   }
