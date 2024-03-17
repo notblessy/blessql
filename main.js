@@ -17,7 +17,7 @@ const createWindow = async () => {
     },
   });
 
-  window.webContents.openDevTools();
+  // window.webContents.openDevTools();
 
   // const startUrl = url.format({
   //   pathname: path.join(__dirname, "/app/build/index.html"),
@@ -28,4 +28,4 @@ const createWindow = async () => {
   // window.loadURL(startUrl);
 };
 
-module.exports = { createWindow, createConnectionWindow };
+module.exports = { createWindow };
