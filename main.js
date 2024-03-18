@@ -28,4 +28,29 @@ const createWindow = async () => {
   // window.loadURL(startUrl);
 };
 
-module.exports = { createWindow };
+const createDashboardWindow = async (sender) => {
+  const window = BrowserWindow.fromWebContents(sender);
+
+  const dashboardWindow = new BrowserWindow({
+    parent: window,
+    title: "blessql-dashboard",
+    titleBarStyle: "hidden",
+    width: 600,
+    height: 400,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: true,
+      preload: path.join(__dirname, "preload.js"),
+    },
+    show: false,
+  });
+
+  // TODO: should change path to build
+  dashboardWindow.loadURL("http://localhost:3000/dashboard");
+
+  dashboardWindow.once("ready-to-show", () => {
+    dashboardWindow.show();
+  });
+};
+
+module.exports = { createWindow, createDashboardWindow };

@@ -34,6 +34,10 @@ body {
   display: none;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .left-box {
   height: 100%;
   display: flex;

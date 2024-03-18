@@ -1,6 +1,6 @@
 let mysql = require("mysql");
 
-const testConnection = (data) => {
+const mysqlConnect = (data) => {
   const connection = mysql.createConnection({
     host: data.host,
     user: data.user,
@@ -21,4 +21,4 @@ const testConnection = (data) => {
   });
 };
 
-module.exports = { testConnection };
+module.exports = { mysqlConnect };

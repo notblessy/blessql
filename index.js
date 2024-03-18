@@ -1,10 +1,12 @@
-const { createWindow } = require("./main");
+const { createWindow, createDashboardWindow } = require("./main");
 const { app, ipcMain, BrowserWindow, dialog } = require("electron");
 const { createConnection } = require("./database/sqlite/connection");
-const { db } = require("./database/sqlite/sqlite");
+const { db: sqlite } = require("./database/sqlite/sqlite");
+
+let mysql;
 
 const path = require("path");
-const { testConnection } = require("./database/mysql/mysql");
+const { mysqlConnect } = require("./database/mysql/mysql");
 
 require("./database.js.bak");
 require("electron-reload")(__dirname);
@@ -20,8 +22,8 @@ app.on("activate", () => {
 });
 
 app.on("before-quit", () => {
-  if (db) {
-    db.close();
+  if (sqlite) {
+    sqlite.close();
   }
 });
 
@@ -68,7 +70,7 @@ ipcMain.on("window:createConnection", (event, data) => {
 
 ipcMain.on("test-connection", async (event, data) => {
   try {
-    const connection = await testConnection(data);
+    const connection = await mysqlConnect(data);
 
     if (connection && connection.state === "authenticated") {
       await connection.query("SELECT * FROM users", (err, rows) => {
@@ -94,6 +96,64 @@ ipcMain.on("test-connection", async (event, data) => {
     }
 
     event.sender.send("test-connection-result", {
+      status: "error",
+    });
+  }
+});
+
+ipcMain.on("mysql:connect", async (event, data) => {
+  try {
+    mysql = await mysqlConnect(data);
+
+    if (mysql && mysql.state === "authenticated") {
+      const window = BrowserWindow.fromWebContents(event.sender);
+
+      const dashboardWindow = new BrowserWindow({
+        title: "blessql-dashboard",
+        titleBarStyle: "hidden",
+        width: 1000,
+        height: 600,
+        webPreferences: {
+          nodeIntegration: true,
+          contextIsolation: true,
+          preload: path.join(__dirname, "preload.js"),
+        },
+        show: false,
+      });
+
+      dashboardWindow.webContents.openDevTools();
+
+      // TODO: should change path to build
+      dashboardWindow.loadURL("http://localhost:3000/dashboard");
+
+      dashboardWindow.once("ready-to-show", () => {
+        dashboardWindow.show();
+        dashboardWindow.webContents.send("mysql-session", {
+          host: mysql.config.host,
+          user: mysql.config.user,
+          database: mysql.config.database,
+          port: mysql.config.port,
+        });
+
+        window.close();
+      });
+
+      dashboardWindow.on("close", async () => {
+        await mysql.end();
+        await createWindow();
+      });
+    }
+  } catch (error) {
+    switch (error.code) {
+      case "ENOTFOUND":
+        dialog.showErrorBox("Error", "No such host");
+      case "ECONNREFUSED":
+        dialog.showErrorBox("Error", "Connection refused");
+      default:
+        dialog.showErrorBox("Error", error.sqlMessage);
+    }
+
+    event.sender.send("mysql:connect-result", {
       status: "error",
     });
   }

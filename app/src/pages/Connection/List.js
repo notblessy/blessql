@@ -85,7 +85,7 @@ export const ConnectionList = () => {
 
                         setSelected(conn.id);
                       }}
-                      onDoubleClick={() => console.log("connected", conn.name)}
+                      onDoubleClick={() => blessql.send("mysql:connect", conn)}
                     >
                       <BsPlugin
                         size={18}
