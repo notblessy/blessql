@@ -2,36 +2,27 @@ import { useEffect, useState } from "react";
 import { IoSearch, IoServerOutline } from "react-icons/io5";
 import { BsPlugin } from "react-icons/bs";
 import { ImTable2, ImEqualizer } from "react-icons/im";
+import { FaTable } from "react-icons/fa";
 
 import "../../style/index.css";
+
+const tables = ["users", "posts", "comments", "likes"];
 
 export const Dashboard = () => {
   const blessql = window.blessql;
 
-  const [connections, setConnections] = useState([]);
-  const [session, setSession] = useState({});
+  const [session, setSession] = useState();
   const [selected, setSelected] = useState("");
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await blessql.getAllConnections();
-        setConnections([...data]);
-      } catch (error) {
-        console.error("Error fetching connections:", error);
-      }
-    };
+    if (!session) {
+      blessql.send("mysql:get-session", {});
+    }
+  }, [blessql, session]);
 
-    fetchData();
-  }, [blessql]);
-
-  blessql.on("mysql-session", (data) => {
+  blessql.on("mysql:session", (data) => {
+    console.log("data", data);
     setSession(data);
-    console.log(data);
-
-    // return () => {
-    //   blessql.removeAllListeners("mysql-session");
-    // };
   });
 
   return (
@@ -46,17 +37,61 @@ export const Dashboard = () => {
         >
           <div style={{ background: "#F8F3F1", minWidth: 200 }}>
             <div
-              className="left-box"
               style={{
                 display: "flex",
-                padding: "20px",
+                paddingTop: "20px",
                 flexDirection: "column",
                 justifyContent: "flex-start",
                 alignItems: "flex-start",
               }}
             >
-              <p className="fs-md left light m-0 mt-3 color-dark">Tables</p>
-              <p className="fs-xs left light m-0 color-dimmed">Version 0.0.1</p>
+              <p
+                style={{ paddingLeft: 10, paddingRight: 10 }}
+                className="fs-md left light m-0 mt-3 color-dark"
+              >
+                Tables
+              </p>
+              <p
+                style={{ paddingLeft: 10, paddingRight: 10 }}
+                className="fs-xs left light m-0 color-dimmed"
+              >
+                {session?.database}
+              </p>
+              <div
+                style={{ marginTop: 10, paddingLeft: 10, paddingRight: 10 }}
+                className="search-container clickable"
+              >
+                <div className="search-button">
+                  <IoSearch size={14} color="#888" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="form-control"
+                  id="search"
+                />
+              </div>
+              <div id="table-container">
+                {tables.map((table, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      gap: 10,
+                      background: selected === table ? "#007AFE" : "",
+                      color: selected === table ? "#FFF" : "#333",
+                    }}
+                    className="clickable"
+                    onClick={() => setSelected(table)}
+                  >
+                    <div style={{ paddingTop: 3 }}>
+                      <FaTable size={15} />
+                    </div>
+                    <p style={{ margin: 0, fontSize: 16 }}>{table}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <div
@@ -112,7 +147,7 @@ export const Dashboard = () => {
                     className="color-dark"
                     style={{ padding: 0, margin: 0 }}
                   />
-                  {session.host}
+                  {session?.host}
                 </button>
                 <button className="connection-each">
                   <BsPlugin
@@ -120,7 +155,7 @@ export const Dashboard = () => {
                     className="color-dark"
                     style={{ padding: 0, margin: 0 }}
                   />
-                  {session.user}
+                  {session?.user}
                 </button>
                 <button className="connection-each">
                   <BsPlugin
@@ -128,7 +163,7 @@ export const Dashboard = () => {
                     className="color-dark"
                     style={{ padding: 0, margin: 0 }}
                   />
-                  {session.port}
+                  {session?.port}
                 </button>
               </div>
               <div className="footer">

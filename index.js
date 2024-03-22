@@ -1,12 +1,14 @@
-const { createWindow, createDashboardWindow } = require("./main");
+const { createWindow } = require("./main");
 const { app, ipcMain, BrowserWindow, dialog } = require("electron");
 const { createConnection } = require("./database/sqlite/connection");
 const { db: sqlite } = require("./database/sqlite/sqlite");
 
-let mysql;
-
 const path = require("path");
-const { mysqlConnect } = require("./database/mysql/mysql");
+const {
+  mysqlConnect,
+  getMysqlConnection,
+  getMysqlSession,
+} = require("./database/mysql/mysql");
 
 require("./database.js.bak");
 require("electron-reload")(__dirname);
@@ -70,7 +72,9 @@ ipcMain.on("window:createConnection", (event, data) => {
 
 ipcMain.on("test-connection", async (event, data) => {
   try {
-    const connection = await mysqlConnect(data);
+    mysqlConnect(data);
+
+    const connection = await getMysqlConnection();
 
     if (connection && connection.state === "authenticated") {
       await connection.query("SELECT * FROM users", (err, rows) => {
@@ -103,7 +107,9 @@ ipcMain.on("test-connection", async (event, data) => {
 
 ipcMain.on("mysql:connect", async (event, data) => {
   try {
-    mysql = await mysqlConnect(data);
+    mysqlConnect(data);
+
+    const mysql = await getMysqlConnection();
 
     if (mysql && mysql.state === "authenticated") {
       const window = BrowserWindow.fromWebContents(event.sender);
@@ -150,11 +156,28 @@ ipcMain.on("mysql:connect", async (event, data) => {
       case "ECONNREFUSED":
         dialog.showErrorBox("Error", "Connection refused");
       default:
-        dialog.showErrorBox("Error", error.sqlMessage);
+        console.log("Error WOYYYYYYYYY", error);
+        dialog.showErrorBox("Error", error.message);
     }
 
     event.sender.send("mysql:connect-result", {
       status: "error",
     });
+  }
+});
+
+ipcMain.on("mysql:get-session", async (event, data) => {
+  try {
+    const session = await getMysqlSession();
+
+    event.sender.send("mysql:session", {
+      status: "success",
+      host: session[0].host,
+      user: session[0].user,
+      database: session[0].database,
+      port: session[0].port,
+    });
+  } catch (error) {
+    dialog.showErrorBox("Error", error.message);
   }
 });

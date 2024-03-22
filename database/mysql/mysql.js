@@ -1,7 +1,9 @@
 let mysql = require("mysql");
 
+let connection;
+
 const mysqlConnect = (data) => {
-  const connection = mysql.createConnection({
+  conn = mysql.createConnection({
     host: data.host,
     user: data.user,
     password: data.password,
@@ -9,16 +11,43 @@ const mysqlConnect = (data) => {
     port: data.port,
   });
 
-  return new Promise((resolve, reject) => {
-    connection.connect((err) => {
+  connection = new Promise((resolve, reject) => {
+    conn.connect((err) => {
       if (err) {
         reject(err);
         return;
       }
 
-      resolve(connection);
+      resolve(conn);
     });
   });
 };
 
-module.exports = { mysqlConnect };
+const getMysqlConnection = async () => {
+  const conn = await connection;
+  return conn;
+};
+
+const getMysqlSession = async () => {
+  try {
+    const conn = await connection;
+
+    return new Promise((resolve, reject) => {
+      conn.query(
+        `SELECT SUBSTRING_INDEX(USER(), '@', 1) AS 'user', SUBSTRING_INDEX(USER(), '@', -1) AS 'host', @@port AS 'port', DATABASE() AS 'database';`,
+        (err, rows, fields) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+
+          resolve(rows);
+        }
+      );
+    });
+  } catch (error) {
+    dialog.showErrorBox("Error", error.message);
+  }
+};
+
+module.exports = { mysqlConnect, getMysqlConnection, getMysqlSession };
