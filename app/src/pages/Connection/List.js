@@ -30,7 +30,7 @@ export const ConnectionList = () => {
           <div className="left-section">
             <div className="left-box">
               <IoServerOutline color="#FFAB09" title="server" size={80} />
-              <p className="fs-md center light m-0 mt-3 color-dark">
+              <p className="fs-md center light m-0 mt-3 color-dark regular">
                 Welcome to blessql
               </p>
               <p className="fs-xs center light m-0 color-dimmed">

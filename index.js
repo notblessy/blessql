@@ -134,12 +134,6 @@ ipcMain.on("mysql:connect", async (event, data) => {
 
       dashboardWindow.once("ready-to-show", () => {
         dashboardWindow.show();
-        dashboardWindow.webContents.send("mysql-session", {
-          host: mysql.config.host,
-          user: mysql.config.user,
-          database: mysql.config.database,
-          port: mysql.config.port,
-        });
 
         window.close();
       });
@@ -150,11 +144,14 @@ ipcMain.on("mysql:connect", async (event, data) => {
       });
     }
   } catch (error) {
+    console.log(error);
     switch (error.code) {
       case "ENOTFOUND":
         dialog.showErrorBox("Error", "No such host");
       case "ECONNREFUSED":
         dialog.showErrorBox("Error", "Connection refused");
+      case "ER_NO_DB_ERROR":
+        dialog.showErrorBox("Error", "No database selected");
       default:
         console.log("Error WOYYYYYYYYY", error);
         dialog.showErrorBox("Error", error.message);
@@ -171,13 +168,21 @@ ipcMain.on("mysql:get-session", async (event, data) => {
     const session = await getMysqlSession();
 
     event.sender.send("mysql:session", {
-      status: "success",
+      status: "Connected",
       host: session[0].host,
       user: session[0].user,
       database: session[0].database,
       port: session[0].port,
+      version: session[0].version,
     });
   } catch (error) {
-    dialog.showErrorBox("Error", error.message);
+    event.sender.send("mysql:session", {
+      status: "Connected",
+      host: session[0].host,
+      user: session[0].user,
+      database: session[0].database,
+      port: session[0].port,
+      version: session[0].version,
+    });
   }
 });

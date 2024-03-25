@@ -34,7 +34,7 @@ const getMysqlSession = async () => {
 
     return new Promise((resolve, reject) => {
       conn.query(
-        `SELECT SUBSTRING_INDEX(USER(), '@', 1) AS 'user', SUBSTRING_INDEX(USER(), '@', -1) AS 'host', @@port AS 'port', DATABASE() AS 'database';`,
+        `SELECT CONCAT('MySQL Version ', SUBSTRING_INDEX(VERSION(), '-', 1)) AS version, SUBSTRING_INDEX(USER(), '@', 1) AS 'user', SUBSTRING_INDEX(USER(), '@', -1) AS 'host', @@port AS 'port', DATABASE() AS 'database';`,
         (err, rows, fields) => {
           if (err) {
             reject(err);
