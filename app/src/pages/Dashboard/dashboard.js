@@ -133,6 +133,7 @@ export const Dashboard = () => {
   const [tabActive, setTabActive] = useState("");
   const [needSpaceColumn, setNeedSpaceColumn] = useState(false);
   const [emptyRows, setEmptyRows] = useState(0);
+
   const { height } = useWindowDimensions();
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
     useTable({
@@ -157,6 +158,10 @@ export const Dashboard = () => {
 
   blessql.on("mysql:session", (data) => {
     setSession(data);
+
+    return () => {
+      blessql.removeAllListeners("mysql:session");
+    };
   });
 
   if (needSpaceColumn) {
@@ -364,6 +369,7 @@ export const Dashboard = () => {
                 </thead>
                 <tbody
                   {...getTableBodyProps()}
+                  className="tbody"
                   style={{ width: "100%", overflowX: "scroll" }}
                 >
                   {rows.map((row) => {
@@ -382,7 +388,6 @@ export const Dashboard = () => {
                       </tr>
                     );
                   })}
-                  {console.log("HEIGHT >>>", emptyRows)}
                   {rows.length < emptyRows &&
                     Array.from({
                       length: Math.max(emptyRows - rows.length, 0),

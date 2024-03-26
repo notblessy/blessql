@@ -316,7 +316,7 @@ input[type="submit"] {
 .table-container {
   width: 100%;
   overflow: scroll;
-  height: calc(100% - 84px);
+  height: calc(100% - 60px);
 }
 
 .fixed-width-table {
@@ -326,10 +326,20 @@ input[type="submit"] {
 }
 
 .header th {
-  background-color: #f0f0f0; /* Header background color */
-  border: 1px solid #ddd; /* Border for header cells */
+  background-color: #FFF; /* Header background color */
+  border: 0.5px solid #ddd; /* Border for header cells */
+  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.1); /* Shadow for header cells */
   position: sticky;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px;
   top:0;
+}
+
+.tbody td {
+  font-size: 11px;
+  font-weight: 400;
+  padding: 5px;
 }
 
 .even-row {
