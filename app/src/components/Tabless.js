@@ -153,18 +153,17 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
             {...{
               style: {
                 width: "100%",
-                height: "100%",
               },
             }}
           >
-            <div className="header">
+            <div className="thead">
               {table.getHeaderGroups().map((headerGroup) => (
-                <div style={{ display: "flex" }}>
-                  <div className="tr" key={headerGroup.id}>
+                <div key={headerGroup.id} style={{ display: "flex" }}>
+                  <div className="tr">
                     {headerGroup.headers.map((header) => (
                       <div
-                        className="th"
                         key={header.id}
+                        className="th"
                         {...{
                           key: header.id,
                           colSpan: header.colSpan,
@@ -205,10 +204,7 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
                 </div>
               ))}
             </div>
-            <div
-              className="tbody"
-              style={{ width: "100%", overflowX: "scroll" }}
-            >
+            <div className="tbody">
               {table.getRowModel().rows.map((row) => {
                 const currentRow = row.getVisibleCells().reduce((acc, cell) => {
                   return {
@@ -296,7 +292,10 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
                 }).map((_, index) => {
                   const row = table.getRowModel().rows[0];
                   return (
-                    <div style={{ display: "flex" }}>
+                    <div
+                      style={{ display: "flex" }}
+                      onClick={() => setRowSelection({})}
+                    >
                       <div
                         key={`empty-row-${index}`}
                         className={`tr ${
@@ -307,10 +306,10 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
                           const cell = row.getVisibleCells()[columnIndex];
                           return (
                             <div
-                              className="td"
                               key={`empty-cell-${columnIndex}`}
+                              className="td"
                               style={{
-                                padding: "11px",
+                                padding: "12px",
                                 width: cell.column.getSize(),
                               }}
                             ></div>

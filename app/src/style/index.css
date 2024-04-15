@@ -276,7 +276,6 @@ input[type="submit"] {
   border-collapse: separate;
   white-space: nowrap; /* Prevent table from breaking into multiple lines */
   border-spacing: 0;
-  table-layout: fixed;
 }
 
 .th {
@@ -299,10 +298,6 @@ input[type="submit"] {
   width: fit-content;
 }
 
-.tr-additional {
-  display: flex;
-}
-
 .tbody {
   box-sizing: border-box;
   display: block;
@@ -310,7 +305,6 @@ input[type="submit"] {
 
 .td {
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11px;
   font-weight: 400;
@@ -318,6 +312,8 @@ input[type="submit"] {
 }
 
 .td input {
+  font-family: "Open Sans", sans-serif;
+  margin: 0;
   font-size: 11px;
   border-radius: 0;
   background: none;
@@ -328,7 +324,6 @@ input[type="submit"] {
 }
 
 .td input:focus {
-  
   background-color: #FFF;
   color: #333
 }
@@ -342,6 +337,8 @@ input[type="submit"] {
   width: 100%;
   padding: 5px;
   text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .even-row {
