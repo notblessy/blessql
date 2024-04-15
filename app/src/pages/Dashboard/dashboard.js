@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { PiTreeStructure } from "react-icons/pi";
 import { RiFileList2Line } from "react-icons/ri";
 import { RiTableLine } from "react-icons/ri";
 import { IoIosArrowForward, IoIosRefresh } from "react-icons/io";
 import { TbSql } from "react-icons/tb";
-import { useTable, createColumnHelper } from "react-table";
 
 import "../../style/index.css";
 import noData from "../../assets/no_data.png";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
+import { Tabless } from "../../components/Tabless";
 
 const tables = ["users", "posts", "comments", "likes"];
 
@@ -63,6 +63,15 @@ const tabs = [
   },
 ];
 
+const getTextWidth = (text) => {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  context.font = getComputedStyle(document.body).font;
+
+  return context.measureText(text).width;
+};
+
 const users = [
   {
     id: 1,
@@ -110,51 +119,38 @@ const users = [
     aad: "1234567890",
     crdffefatedAt: "1234567890",
     dfsf: "1234567890",
+    dsf: "1234567890",
   },
 ];
 
 const col = Object.keys(users[0]);
 
-const columns = col.map((item) => {
+const defaultColumns = col.map((item) => {
   return {
-    Header: item,
-    accessor: item,
+    header: item,
+    accessorKey: item,
+    size: getTextWidth(item) + 20,
+    footer: (props) => {
+      // eslint-disable-next-line no-unused-expressions
+      props.column.id;
+    },
   };
 });
 
 export const Dashboard = () => {
   const blessql = window.blessql;
 
-  const tableContainer = useRef(null);
-  const tableBody = useRef(null);
-
   const [session, setSession] = useState();
   const [selected, setSelected] = useState("");
   const [tabActive, setTabActive] = useState("");
-  const [needSpaceColumn, setNeedSpaceColumn] = useState(false);
-  const [emptyRows, setEmptyRows] = useState(0);
 
   const { height } = useWindowDimensions();
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable({
-      columns,
-      data: users,
-    });
 
   useEffect(() => {
     if (!session) {
       blessql.send("mysql:get-session", {});
     }
-
-    if (tableContainer?.current && tableBody?.current) {
-      if (tableContainer.current.offsetWidth > tableBody.current.offsetWidth) {
-        setNeedSpaceColumn(true);
-      } else {
-        setNeedSpaceColumn(false);
-      }
-    }
-    setEmptyRows(Math.floor((height - 84) / 24));
-  }, [blessql, height, session]);
+  }, [blessql, session]);
 
   blessql.on("mysql:session", (data) => {
     setSession(data);
@@ -163,13 +159,6 @@ export const Dashboard = () => {
       blessql.removeAllListeners("mysql:session");
     };
   });
-
-  if (needSpaceColumn) {
-    columns.push({
-      Header: "",
-      accessor: "",
-    });
-  }
 
   return (
     <>
@@ -349,118 +338,71 @@ export const Dashboard = () => {
                 </div>
               </div>
             </div>
-            <div ref={tableContainer} className="table-container clickable">
-              <table
-                ref={tableBody}
-                className="fixed-width-table"
-                {...getTableProps()}
-              >
-                <thead className="header">
+            <Tabless
+              clickable
+              height={height}
+              rows={users}
+              headers={defaultColumns}
+            />
+            {/* <div ref={tableContainer} className="table-container clickable">
+              <div ref={tableBody} className="table" {...getTableProps()}>
+                <div className="table-header">
                   {headerGroups.map((headerGroup) => (
-                    <tr {...headerGroup.getHeaderGroupProps()}>
+                    <div {...headerGroup.getHeaderGroupProps()}>
                       {headerGroup.headers.map((column) => (
-                        <th {...column.getHeaderProps()}>
+                        <div className="th" {...column.getHeaderProps()}>
                           {column.render("Header")}
-                        </th>
+                          <div
+                            {...column.getResizerProps()}
+                            className="th resizer"
+                          />
+                        </div>
                       ))}
-                      <th style={{ width: "100%" }}></th>
-                    </tr>
+                      <div className="th" style={{ width: "100%" }}></div>
+                    </div>
                   ))}
-                </thead>
-                <tbody
-                  {...getTableBodyProps()}
-                  className="tbody"
-                  style={{ width: "100%", overflowX: "scroll" }}
-                >
+                </div>
+                <div {...getTableBodyProps()}>
                   {rows.map((row) => {
                     prepareRow(row);
                     return (
-                      <tr
+                      <div
                         {...row.getRowProps()}
-                        className={row.index % 2 === 0 ? "even-row" : "odd-row"}
+                        className={`table-row ${
+                          row.index % 2 === 0 ? "even-row" : "odd-row"
+                        }`}
                       >
                         {row.cells.map((cell) => (
-                          <td {...cell.getCellProps()}>
+                          <div className="td" {...cell.getCellProps()}>
                             {cell.render("Cell")}
-                          </td>
+                          </div>
                         ))}
-                        <td style={{ width: "100%" }}></td>
-                      </tr>
+                        <div className="td" style={{ width: "100%" }}></div>
+                      </div>
                     );
                   })}
                   {rows.length < emptyRows &&
                     Array.from({
                       length: Math.max(emptyRows - rows.length, 0),
                     }).map((_, index) => (
-                      <tr
+                      <div
                         key={`empty-row-${index}`}
-                        className={index % 2 === 0 ? "even-row" : "odd-row"}
+                        className={`table-row ${
+                          index % 2 === 0 ? "even-row" : "odd-row"
+                        }`}
                       >
                         {columns.map((_, columnIndex) => (
-                          <td
+                          <div
+                            className="td"
                             key={`empty-cell-${columnIndex}`}
                             style={{ padding: "12px" }}
-                          ></td>
+                          ></div>
                         ))}
-                        <td style={{ width: "100%" }}></td>
-                      </tr>
+                        <div className="td" style={{ width: "100%" }}></div>
+                      </div>
                     ))}
-                </tbody>
-              </table>
-            </div>
-            {/* <div
-              className="no-scrollbar"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-start",
-                height: "calc(100% - 60px)",
-                width: "100%",
-                boxSizing: "border-box",
-                overflow: "auto",
-              }}
-            >
-              <table className="macos-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.id}</td>
-                      <td>{item.name}</td>
-                      <td>{item.email}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div> */}
-            {/* <div
-              className="no-scrollbar"
-              style={{
-                height: "calc(100% - 60px)",
-                paddingLeft: 10,
-                paddingRight: 10,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                boxSizing: "border-box",
-                overflow: "auto",
-              }}
-            >
-              <img
-                src={noData}
-                alt="No Data"
-                style={{
-                  width: "200px",
-                  height: "auto",
-                }}
-              />
+                </div>
+              </div>
             </div> */}
           </div>
         </div>
