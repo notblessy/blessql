@@ -90,13 +90,12 @@ ipcMain.on("test-connection", async (event, data) => {
 
     connection.end();
   } catch (error) {
-    switch (error.code) {
-      case "ENOTFOUND":
-        dialog.showErrorBox("Error", "No such host");
-      case "ECONNREFUSED":
-        dialog.showErrorBox("Error", "Connection refused");
-      default:
-        dialog.showErrorBox("Error", error.sqlMessage);
+    if (error.code === "ENOTFOUND") {
+      dialog.showErrorBox("Error", "No such host");
+    } else if (error.code === "ECONNREFUSED") {
+      dialog.showErrorBox("Error", "Connection refused");
+    } else {
+      dialog.showErrorBox("Error", error.sqlMessage);
     }
 
     event.sender.send("test-connection-result", {
@@ -144,17 +143,12 @@ ipcMain.on("mysql:connect", async (event, data) => {
       });
     }
   } catch (error) {
-    console.log(error);
-    switch (error.code) {
-      case "ENOTFOUND":
-        dialog.showErrorBox("Error", "No such host");
-      case "ECONNREFUSED":
-        dialog.showErrorBox("Error", "Connection refused");
-      case "ER_NO_DB_ERROR":
-        dialog.showErrorBox("Error", "No database selected");
-      default:
-        console.log("Error WOYYYYYYYYY", error);
-        dialog.showErrorBox("Error", error.message);
+    if (error.code === "ENOTFOUND") {
+      dialog.showErrorBox("Error", "No such host");
+    } else if (error.code === "ECONNREFUSED") {
+      dialog.showErrorBox("Error", "Connection refused");
+    } else {
+      dialog.showErrorBox("Error", error.sqlMessage);
     }
 
     event.sender.send("mysql:connect-result", {
