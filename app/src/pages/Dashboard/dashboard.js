@@ -155,9 +155,7 @@ export const Dashboard = () => {
   blessql.on("mysql:session", (data) => {
     setSession(data);
 
-    return () => {
-      blessql.removeAllListeners("mysql:session");
-    };
+    return () => blessql.removeAllListeners("mysql:session");
   });
 
   return (
@@ -198,7 +196,7 @@ export const Dashboard = () => {
                 </p>
               </div>
               <p
-                style={{ padding: "0 10px", fontSize: 12 }}
+                style={{ fontSize: 12, padding: "0 10px" }}
                 className="left light m-0 color-dimmed bold"
               >
                 Tables
@@ -209,6 +207,9 @@ export const Dashboard = () => {
                   style={{
                     background: selected === table ? "#007AFE" : "",
                     color: selected === table ? "#FFF" : "#333",
+                    margin: "0 5px",
+                    padding: "3px 5px",
+                    borderRadius: 3,
                   }}
                   className="clickable"
                   onClick={() => {
@@ -226,7 +227,6 @@ export const Dashboard = () => {
                       flexDirection: "row",
                       alignItems: "center",
                       gap: 3,
-                      padding: "3px 10px",
                     }}
                   >
                     <RiTableLine

@@ -267,7 +267,6 @@ input[type="submit"] {
 }
 
 .table-container {
-  width: 100%;
   overflow: scroll;
   height: calc(100% - 60px);
 }

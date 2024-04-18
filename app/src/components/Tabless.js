@@ -79,14 +79,26 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
   const [data, setData] = useState(() => [...rows]);
   const [rowSelection, setRowSelection] = useState({});
   const [emptyRows, setEmptyRows] = useState(0);
+  const [additionalCell, setAdditionalCell] = useState(false);
 
-  const tableContainer = useRef(null);
-  const tableBody = useRef(null);
+  const tableRef = useRef(null);
+  const containerRef = useRef(null);
 
   // const rerender = useReducer(() => ({}), {})[1];
   const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper();
 
   useEffect(() => {
+    if (containerRef.current && tableRef.current) {
+      const containerWidth = containerRef.current.offsetWidth;
+      const tableWidth = tableRef.current.offsetWidth;
+      console.log(tableWidth, containerWidth);
+      if (tableWidth <= containerWidth) {
+        setAdditionalCell(true);
+      } else {
+        setAdditionalCell(false);
+      }
+    }
+
     setEmptyRows(Math.floor((height - 84) / 22));
   }, [height]);
 
@@ -146,20 +158,12 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
           direction: table.options.columnResizeDirection,
         }}
       >
-        <div className="table-container" ref={tableContainer}>
-          <div
-            ref={tableBody}
-            className="table"
-            {...{
-              style: {
-                width: "100%",
-              },
-            }}
-          >
+        <div className="table-container" ref={containerRef}>
+          <div className="table">
             <div className="thead">
               {table.getHeaderGroups().map((headerGroup) => (
                 <div key={headerGroup.id} style={{ display: "flex" }}>
-                  <div className="tr">
+                  <div className="tr" ref={tableRef}>
                     {headerGroup.headers.map((header) => (
                       <div
                         key={header.id}
@@ -193,14 +197,16 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
                       </div>
                     ))}
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "100%",
-                    }}
-                  >
-                    <div className="th" style={{ width: "100%" }}></div>
-                  </div>
+                  {additionalCell && (
+                    <div
+                      style={{
+                        display: "flex",
+                        width: "100%",
+                      }}
+                    >
+                      <div className="th" style={{ width: "100%" }}></div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -260,29 +266,31 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
                         );
                       })}
                     </div>
-                    <div
-                      className={`${
-                        !row.getIsSelected()
-                          ? !editedRow
-                            ? row.index % 2 === 0
-                              ? "even-row"
-                              : "odd-row"
-                            : "edited-row"
-                          : "selected-row"
-                      }`}
-                      style={{
-                        display: "flex",
-                        width: "100%",
-                      }}
-                      onClick={() => {
-                        if (!row.getIsSelected()) {
-                          row.toggleSelected();
-                          return;
-                        }
-                      }}
-                    >
-                      <div className="td" style={{ width: "100%" }}></div>
-                    </div>
+                    {additionalCell && (
+                      <div
+                        className={`${
+                          !row.getIsSelected()
+                            ? !editedRow
+                              ? row.index % 2 === 0
+                                ? "even-row"
+                                : "odd-row"
+                              : "edited-row"
+                            : "selected-row"
+                        }`}
+                        style={{
+                          display: "flex",
+                          width: "100%",
+                        }}
+                        onClick={() => {
+                          if (!row.getIsSelected()) {
+                            row.toggleSelected();
+                            return;
+                          }
+                        }}
+                      >
+                        <div className="td" style={{ width: "100%" }}></div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -316,23 +324,25 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
                           );
                         })}
                       </div>
-                      <div
-                        className={`${
-                          index % 2 === 0 ? "even-row" : "odd-row"
-                        }`}
-                        style={{
-                          display: "flex",
-                          width: "100%",
-                        }}
-                        onClick={() => {
-                          if (!row.getIsSelected()) {
-                            row.toggleSelected();
-                            return;
-                          }
-                        }}
-                      >
-                        <div className="td" style={{ width: "100%" }}></div>
-                      </div>
+                      {additionalCell && (
+                        <div
+                          className={`${
+                            index % 2 === 0 ? "even-row" : "odd-row"
+                          }`}
+                          style={{
+                            display: "flex",
+                            width: "100%",
+                          }}
+                          onClick={() => {
+                            if (!row.getIsSelected()) {
+                              row.toggleSelected();
+                              return;
+                            }
+                          }}
+                        >
+                          <div className="td" style={{ width: "100%" }}></div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
