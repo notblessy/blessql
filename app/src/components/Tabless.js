@@ -81,26 +81,10 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
   const [emptyRows, setEmptyRows] = useState(0);
   const [additionalCell, setAdditionalCell] = useState(false);
 
-  const tableRef = useRef(null);
   const containerRef = useRef(null);
 
   // const rerender = useReducer(() => ({}), {})[1];
   const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper();
-
-  useEffect(() => {
-    if (containerRef.current && tableRef.current) {
-      const containerWidth = containerRef.current.offsetWidth;
-      const tableWidth = tableRef.current.offsetWidth;
-      console.log(tableWidth, containerWidth);
-      if (tableWidth <= containerWidth) {
-        setAdditionalCell(true);
-      } else {
-        setAdditionalCell(false);
-      }
-    }
-
-    setEmptyRows(Math.floor((height - 84) / 22));
-  }, [height]);
 
   const table = useReactTable({
     data,
@@ -146,6 +130,22 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
     },
   });
 
+  useEffect(() => {
+    if (containerRef.current && table.getTotalSize() > 0) {
+      const containerWidth = containerRef.current.offsetWidth;
+      const tableWidth = table.getTotalSize();
+
+      if (tableWidth <= containerWidth) {
+        setAdditionalCell(true);
+      } else {
+        setAdditionalCell(false);
+      }
+    }
+
+    setEmptyRows(Math.floor((height - 84) / 22));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [height, table.getTotalSize()]);
+
   return (
     <div
       className={`p2 ${clickable ? "clickable" : ""}`}
@@ -163,7 +163,7 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
             <div className="thead">
               {table.getHeaderGroups().map((headerGroup) => (
                 <div key={headerGroup.id} style={{ display: "flex" }}>
-                  <div className="tr" ref={tableRef}>
+                  <div className="tr">
                     {headerGroup.headers.map((header) => (
                       <div
                         key={header.id}
