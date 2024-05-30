@@ -8,6 +8,8 @@ const {
   mysqlConnect,
   getMysqlConnection,
   getMysqlSession,
+  getTableRows,
+  getTables,
 } = require("./database/mysql/mysql");
 
 require("./database.js.bak");
@@ -178,5 +180,27 @@ ipcMain.on("mysql:get-session", async (event, data) => {
       port: session[0].port,
       version: session[0].version,
     });
+  }
+});
+
+ipcMain.on("mysql:get-tables", async (event, data) => {
+  try {
+    const tables = await getTables(data);
+
+    event.sender.send("mysql:tables", tables);
+  } catch (error) {
+    event.sender.send("mysql:tables", []);
+    console.error(error);
+  }
+});
+
+ipcMain.on("mysql:get-table-rows", async (event, data) => {
+  try {
+    const rows = await getTableRows(data);
+
+    event.sender.send("mysql:table-rows", rows);
+  } catch (error) {
+    event.sender.send("mysql:table-rows", []);
+    console.error(error);
   }
 });

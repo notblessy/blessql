@@ -40,6 +40,15 @@ const defaultColumn = {
   },
 };
 
+const getTextWidth = (text) => {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  context.font = getComputedStyle(document.body).font;
+
+  return context.measureText(text).width;
+};
+
 const useSkipper = () => {
   const shouldSkipRef = useRef(true);
   const shouldSkip = shouldSkipRef.current;
@@ -74,8 +83,8 @@ const isIdenticalObject = (obj1, obj2) => {
 };
 
 // eslint-disable-next-line react/prop-types
-export const Tabless = ({ clickable, height, rows, headers }) => {
-  const [columns] = useState(() => [...headers]);
+export const Tabless = ({ clickable, height, rows }) => {
+  const [columns, setColumns] = useState([]);
   const [data, setData] = useState(() => [...rows]);
   const [rowSelection, setRowSelection] = useState({});
   const [emptyRows, setEmptyRows] = useState(0);
@@ -142,197 +151,139 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
       }
     }
 
+    if (rows) {
+      if (rows.length === 0) {
+        setColumns([]);
+        return;
+      }
+
+      const col = Object.keys(rows[0]);
+
+      const defaultColumns = col?.map((item) => {
+        return {
+          header: item,
+          accessorKey: item,
+          size: getTextWidth(item) + 20,
+          footer: (props) => {
+            // eslint-disable-next-line no-unused-expressions
+            props.column.id;
+          },
+        };
+      });
+
+      setColumns(defaultColumns);
+    }
+
     setEmptyRows(Math.floor((height - 84) / 22));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [height, table.getTotalSize()]);
+  }, [height, table.getTotalSize(), rows]);
 
   return (
-    <div
-      className={`p2 ${clickable ? "clickable" : ""}`}
-      style={{ width: "100%", height: "100%" }}
-    >
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          direction: table.options.columnResizeDirection,
-        }}
-      >
-        <div className="table-container" ref={containerRef}>
-          <div className="table">
-            <div className="thead">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <div key={headerGroup.id} style={{ display: "flex" }}>
-                  <div className="tr">
-                    {headerGroup.headers.map((header) => (
-                      <div
-                        key={header.id}
-                        className="th"
-                        {...{
-                          key: header.id,
-                          colSpan: header.colSpan,
-                          style: {
-                            width: header.getSize(),
-                          },
-                        }}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                        <div
-                          {...{
-                            onDoubleClick: () => header.column.resetSize(),
-                            onMouseDown: header.getResizeHandler(),
-                            onTouchStart: header.getResizeHandler(),
-                            className: `resizer ${
-                              table.options.columnResizeDirection
-                            } ${
-                              header.column.getIsResizing() ? "isResizing" : ""
-                            }`,
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  {additionalCell && (
-                    <div
-                      style={{
-                        display: "flex",
-                        width: "100%",
-                      }}
-                    >
-                      <div className="th" style={{ width: "100%" }}></div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="tbody">
-              {table.getRowModel().rows.map((row) => {
-                const currentRow = row.getVisibleCells().reduce((acc, cell) => {
-                  return {
-                    ...acc,
-                    [cell.column.id]: cell.getContext().getValue(),
-                  };
-                }, {});
-
-                const originalRow = rows[row.index];
-
-                let editedRow = false;
-                if (!isIdenticalObject(currentRow, originalRow)) {
-                  editedRow = true;
-                }
-
-                return (
-                  <div style={{ display: "flex" }}>
-                    <div
-                      key={row.id}
-                      className={`tr ${
-                        !row.getIsSelected()
-                          ? !editedRow
-                            ? row.index % 2 === 0
-                              ? "even-row"
-                              : "odd-row"
-                            : "edited-row"
-                          : "selected-row"
-                      }`}
-                      onClick={() => {
-                        if (!row.getIsSelected()) {
-                          row.toggleSelected();
-                          return;
-                        }
-                      }}
-                    >
-                      {row.getVisibleCells().map((cell) => {
-                        return (
+    <>
+      {!data || !columns ? (
+        <div>No data</div>
+      ) : (
+        <div
+          className={`p2 ${clickable ? "clickable" : ""}`}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              direction: table.options.columnResizeDirection,
+            }}
+          >
+            <div className="table-container" ref={containerRef}>
+              <div className="table">
+                <div className="thead">
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <div key={headerGroup.id} style={{ display: "flex" }}>
+                      <div className="tr">
+                        {headerGroup.headers.map((header) => (
                           <div
-                            className="td"
-                            key={cell.id}
+                            key={header.id}
+                            className="th"
                             {...{
-                              key: cell.id,
+                              key: header.id,
+                              colSpan: header.colSpan,
                               style: {
-                                width: cell.column.getSize(),
+                                width: header.getSize(),
                               },
                             }}
                           >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {additionalCell && (
-                      <div
-                        className={`${
-                          !row.getIsSelected()
-                            ? !editedRow
-                              ? row.index % 2 === 0
-                                ? "even-row"
-                                : "odd-row"
-                              : "edited-row"
-                            : "selected-row"
-                        }`}
-                        style={{
-                          display: "flex",
-                          width: "100%",
-                        }}
-                        onClick={() => {
-                          if (!row.getIsSelected()) {
-                            row.toggleSelected();
-                            return;
-                          }
-                        }}
-                      >
-                        <div className="td" style={{ width: "100%" }}></div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {rows.length < emptyRows &&
-                Array.from({
-                  length: Math.max(emptyRows - rows.length, 0),
-                }).map((_, index) => {
-                  const row = table.getRowModel().rows[0];
-                  return (
-                    <div
-                      style={{ display: "flex" }}
-                      onClick={() => setRowSelection({})}
-                    >
-                      <div
-                        key={`empty-row-${index}`}
-                        className={`tr ${
-                          index % 2 === 0 ? "even-row" : "odd-row"
-                        }`}
-                      >
-                        {headers.map((_, columnIndex) => {
-                          const cell = row.getVisibleCells()[columnIndex];
-                          return (
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header?.column?.columnDef.header,
+                                  header.getContext()
+                                )}
                             <div
-                              key={`empty-cell-${columnIndex}`}
-                              className="td"
-                              style={{
-                                padding: "12px",
-                                width: cell.column.getSize(),
+                              {...{
+                                onDoubleClick: () =>
+                                  header?.column?.resetSize(),
+                                onMouseDown: header.getResizeHandler(),
+                                onTouchStart: header.getResizeHandler(),
+                                className: `resizer ${
+                                  table.options.columnResizeDirection
+                                } ${
+                                  header?.column?.getIsResizing()
+                                    ? "isResizing"
+                                    : ""
+                                }`,
                               }}
-                            ></div>
-                          );
-                        })}
+                            />
+                          </div>
+                        ))}
                       </div>
                       {additionalCell && (
                         <div
-                          className={`${
-                            index % 2 === 0 ? "even-row" : "odd-row"
-                          }`}
+                          className="tr"
                           style={{
                             display: "flex",
                             width: "100%",
                           }}
+                        >
+                          <div className="th" style={{ width: "100%" }}></div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div key="tbody" className="tbody">
+                  {table.getRowModel().rows.map((row, index) => {
+                    console.log("row", row);
+                    const currentRow = row
+                      ?.getVisibleCells()
+                      ?.reduce((acc, cell) => {
+                        return {
+                          ...acc,
+                          [cell?.column?.id]: cell.getContext().getValue(),
+                        };
+                      }, {});
+
+                    const originalRow = rows[row.index];
+
+                    let editedRow = false;
+                    if (currentRow && originalRow) {
+                      if (!isIdenticalObject(currentRow, originalRow)) {
+                        editedRow = true;
+                      }
+                    }
+
+                    return (
+                      <div key={row.id + index} style={{ display: "flex" }}>
+                        <div
+                          key={row.id}
+                          className={`tr ${
+                            !row.getIsSelected()
+                              ? !editedRow
+                                ? row.index % 2 === 0
+                                  ? "even-row"
+                                  : "odd-row"
+                                : "edited-row"
+                              : "selected-row"
+                          }`}
                           onClick={() => {
                             if (!row.getIsSelected()) {
                               row.toggleSelected();
@@ -340,16 +291,118 @@ export const Tabless = ({ clickable, height, rows, headers }) => {
                             }
                           }}
                         >
-                          <div className="td" style={{ width: "100%" }}></div>
+                          {row.getVisibleCells().map((cell) => {
+                            return (
+                              <div
+                                className="td"
+                                key={cell.id}
+                                {...{
+                                  key: cell.id,
+                                  style: {
+                                    width: cell?.column?.getSize(),
+                                  },
+                                }}
+                              >
+                                {console.log("cell", cell)}
+                                {flexRender(
+                                  cell?.column?.columnDef?.cell
+                                    ? cell.column.columnDef.cell
+                                    : "NULL",
+                                  cell.getContext()
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        {additionalCell && (
+                          <div
+                            className={`${
+                              !row.getIsSelected()
+                                ? !editedRow
+                                  ? row.index % 2 === 0
+                                    ? "even-row"
+                                    : "odd-row"
+                                  : "edited-row"
+                                : "selected-row"
+                            }`}
+                            style={{
+                              display: "flex",
+                              width: "100%",
+                            }}
+                            onClick={() => {
+                              if (!row.getIsSelected()) {
+                                row.toggleSelected();
+                                return;
+                              }
+                            }}
+                          >
+                            <div className="td" style={{ width: "100%" }}></div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {rows.length < emptyRows &&
+                    Array.from({
+                      length: Math.max(emptyRows - rows.length, 0),
+                    }).map((_, index) => {
+                      const row = table.getRowModel().rows[0];
+                      return (
+                        <div
+                          key={`empty-row-${index}`}
+                          style={{ display: "flex" }}
+                          onClick={() => setRowSelection({})}
+                        >
+                          <div
+                            className={`tr ${
+                              index % 2 === 0 ? "even-row" : "odd-row"
+                            }`}
+                          >
+                            {columns?.map((_, columnIndex) => {
+                              const cell = row.getVisibleCells()[columnIndex];
+                              return (
+                                <div
+                                  key={`empty-cell-${columnIndex}`}
+                                  className="td"
+                                  style={{
+                                    padding: "12px",
+                                    width: cell?.column?.getSize(),
+                                  }}
+                                ></div>
+                              );
+                            })}
+                          </div>
+                          {additionalCell && (
+                            <div
+                              className={`${
+                                index % 2 === 0 ? "even-row" : "odd-row"
+                              }`}
+                              style={{
+                                display: "flex",
+                                width: "100%",
+                              }}
+                              onClick={() => {
+                                if (!row.getIsSelected()) {
+                                  row.toggleSelected();
+                                  return;
+                                }
+                              }}
+                            >
+                              <div
+                                className="td"
+                                style={{ width: "100%" }}
+                              ></div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
