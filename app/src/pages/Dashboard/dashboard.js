@@ -10,8 +10,6 @@ import noData from "../../assets/no_data.png";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
 import { Tabless } from "../../components/Tabless";
 
-const tables = ["users", "posts", "comments", "likes"];
-
 const tabs = [
   {
     name: "Refresh",
@@ -63,86 +61,18 @@ const tabs = [
   },
 ];
 
-const getTextWidth = (text) => {
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-
-  context.font = getComputedStyle(document.body).font;
-
-  return context.measureText(text).width;
-};
-
-const users = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@gmail.com",
-    phone: "1234567890",
-    createdAt: "1234567890",
-    cre: "1234567890",
-    aad: "1234567890",
-    crdffefatedAt: "1234567890",
-    dfsf: "1234567890",
-    dsf: "1234567890",
-  },
-  {
-    id: 2,
-    name: "Jane Doe",
-    email: "jane@gmail.com",
-    createdAt: "1234567890",
-    phone: "1234567890",
-    cre: "1234567890",
-    aad: "1234567890",
-    crdffefatedAt: "1234567890",
-    dfsf: "1234567890",
-    dsf: "1234567890",
-  },
-  {
-    id: 3,
-    name: "Jane Doe",
-    email: "jane@gmail.com",
-    createdAt: "1234567890",
-    phone: "1234567890",
-    cre: "1234567890",
-    aad: "1234567890",
-    crdffefatedAt: "1234567890",
-    dfsf: "1234567890",
-    dsf: "1234567890",
-  },
-  {
-    id: 4,
-    name: "Jane Doe",
-    email: "jane@gmail.com",
-    createdAt: "1234567890",
-    phone: "1234567890",
-    cre: "1234567890",
-    aad: "1234567890",
-    crdffefatedAt: "1234567890",
-    dfsf: "1234567890",
-    dsf: "1234567890",
-  },
-];
-
-const col = Object.keys(users[0]);
-
-const defaultColumns = col.map((item) => {
-  return {
-    header: item,
-    accessorKey: item,
-    size: getTextWidth(item) + 20,
-    footer: (props) => {
-      // eslint-disable-next-line no-unused-expressions
-      props.column.id;
-    },
-  };
-});
-
 export const Dashboard = () => {
   const blessql = window.blessql;
 
   const [session, setSession] = useState();
-  const [selected, setSelected] = useState("");
+  const [tables, setTables] = useState();
+
+  const [rows, setRows] = useState();
+
   const [tabActive, setTabActive] = useState("");
+
+  const [selected, setSelected] = useState("");
+  const [filter, setFilter] = useState({});
 
   const { height } = useWindowDimensions();
 
@@ -150,12 +80,55 @@ export const Dashboard = () => {
     if (!session) {
       blessql.send("mysql:get-session", {});
     }
-  }, [blessql, session]);
+
+    if (session && !tables) {
+      blessql.send("mysql:get-tables", { database: session.database });
+    }
+
+    if (selected) {
+      blessql.send("mysql:get-table-rows", {
+        table: selected,
+        filter: filter,
+      });
+    }
+  }, [blessql, session, selected, filter, tables]);
 
   blessql.on("mysql:session", (data) => {
     setSession(data);
-
     return () => blessql.removeAllListeners("mysql:session");
+  });
+
+  blessql.on("mysql:table-rows", (data) => {
+    if (!data) {
+      setRows([]);
+      return;
+    }
+
+    const denormalize = data?.map((data) => {
+      return {
+        ...data,
+        created_at: new Date(data.created_at).toLocaleString(),
+        updated_at: new Date(data.updated_at).toLocaleString(),
+      };
+    });
+
+    setRows(denormalize);
+
+    return () => blessql.removeAllListeners("mysql:table-rows");
+  });
+
+  blessql.on("mysql:tables", (data) => {
+    const tables = data?.reduce((acc, item) => {
+      if (item.table_name) {
+        acc.push(item.table_name);
+      }
+
+      return acc;
+    }, []);
+
+    setTables(tables);
+
+    return () => blessql.removeAllListeners("mysql:tables");
   });
 
   return (
@@ -201,7 +174,7 @@ export const Dashboard = () => {
               >
                 Tables
               </p>
-              {tables.map((table, index) => (
+              {tables?.map((table, index) => (
                 <div
                   key={index}
                   style={{
@@ -338,12 +311,7 @@ export const Dashboard = () => {
                 </div>
               </div>
             </div>
-            <Tabless
-              clickable
-              height={height}
-              rows={users}
-              headers={defaultColumns}
-            />
+            {rows && <Tabless clickable height={height} rows={rows} />}
             {/* <div ref={tableContainer} className="table-container clickable">
               <div ref={tableBody} className="table" {...getTableProps()}>
                 <div className="table-header">
